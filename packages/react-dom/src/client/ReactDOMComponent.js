@@ -73,6 +73,7 @@ import {
   enableTrustedTypesIntegration,
   enableCustomElementPropertySupport,
   enableClientRenderFallbackOnTextMismatch,
+  enableFloat,
 } from 'shared/ReactFeatureFlags';
 import {
   mediaEventTypes,
@@ -257,7 +258,7 @@ export function checkForUnmatchedText(
   }
 }
 
-function getOwnerDocumentFromRootContainer(
+export function getOwnerDocumentFromRootContainer(
   rootContainerElement: Element | Document | DocumentFragment,
 ): Document {
   return rootContainerElement.nodeType === DOCUMENT_NODE
@@ -419,7 +420,7 @@ export function createElement(
       const firstChild = ((div.firstChild: any): HTMLScriptElement);
       domElement = div.removeChild(firstChild);
     } else if (typeof props.is === 'string') {
-      // $FlowIssue `createElement` should be updated for Web Components
+      // $FlowFixMe `createElement` should be updated for Web Components
       domElement = ownerDocument.createElement(type, {is: props.is});
     } else {
       // Separate else branch instead of using `props.is || undefined` above because of a Firefox bug.
@@ -1018,6 +1019,17 @@ export function diffHydratedProperties(
           : getPropertyInfo(propKey);
       if (rawProps[SUPPRESS_HYDRATION_WARNING] === true) {
         // Don't bother comparing. We're ignoring all these warnings.
+      } else if (
+        enableFloat &&
+        tag === 'link' &&
+        rawProps.rel === 'stylesheet' &&
+        propKey === 'precedence'
+      ) {
+        // @TODO this is a temporary rule while we haven't implemented HostResources yet. This is used to allow
+        // for hydrating Resources (at the moment, stylesheets with a precedence prop) by using a data attribute.
+        // When we implement HostResources there will be no hydration directly so this code can be deleted
+        // $FlowFixMe - Should be inferred as not undefined.
+        extraAttributeNames.delete('data-rprec');
       } else if (
         propKey === SUPPRESS_CONTENT_EDITABLE_WARNING ||
         propKey === SUPPRESS_HYDRATION_WARNING ||

@@ -67,6 +67,7 @@ export const prepareScopeUpdate = $$$hostConfig.prepareScopeUpdate;
 export const getInstanceFromScope = $$$hostConfig.getInstanceFromScope;
 export const getCurrentEventPriority = $$$hostConfig.getCurrentEventPriority;
 export const detachDeletedInstance = $$$hostConfig.detachDeletedInstance;
+export const requestPostPaintCallback = $$$hostConfig.requestPostPaintCallback;
 
 // -------------------
 //      Microtasks
@@ -186,3 +187,6 @@ export const didNotFindHydratableTextInstance =
 export const didNotFindHydratableSuspenseInstance =
   $$$hostConfig.didNotFindHydratableSuspenseInstance;
 export const errorHydratingContainer = $$$hostConfig.errorHydratingContainer;
+export const isHydratableResource = $$$hostConfig.isHydratableResource;
+export const getMatchingResourceInstance =
+  $$$hostConfig.getMatchingResourceInstance;

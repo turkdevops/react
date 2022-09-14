@@ -8,6 +8,7 @@
  */
 
 import type {ReactNodeList} from 'shared/ReactTypes';
+import type {BootstrapScriptDescriptor} from './ReactDOMServerFormatConfig';
 
 import ReactVersion from 'shared/ReactVersion';
 
@@ -23,17 +24,17 @@ import {
   createRootFormatContext,
 } from './ReactDOMServerFormatConfig';
 
-type Options = {|
+type Options = {
   identifierPrefix?: string,
   namespaceURI?: string,
   nonce?: string,
   bootstrapScriptContent?: string,
-  bootstrapScripts?: Array<string>,
-  bootstrapModules?: Array<string>,
+  bootstrapScripts?: Array<string | BootstrapScriptDescriptor>,
+  bootstrapModules?: Array<string | BootstrapScriptDescriptor>,
   progressiveChunkSize?: number,
   signal?: AbortSignal,
   onError?: (error: mixed) => ?string,
-|};
+};
 
 // TODO: Move to sub-classing ReadableStream.
 type ReactDOMServerReadableStream = ReadableStream & {
@@ -56,10 +57,10 @@ function renderToReadableStream(
       const stream: ReactDOMServerReadableStream = (new ReadableStream(
         {
           type: 'bytes',
-          pull(controller) {
+          pull(controller): ?Promise<void> {
             startFlowing(request, controller);
           },
-          cancel(reason) {
+          cancel(reason): ?Promise<void> {
             abort(request);
           },
         },
