@@ -10,7 +10,7 @@
 // Renderers that don't support hydration
 // can re-export everything from this module.
 
-function shim(...args: any) {
+function shim(...args: any): empty {
   throw new Error(
     'The current renderer does not support hydration. ' +
       'This error is likely caused by a bug in React. ' +
@@ -21,15 +21,14 @@ function shim(...args: any) {
 // Hydration (when unsupported)
 export type SuspenseInstance = mixed;
 export const supportsHydration = false;
+export const isHydratable = shim;
 export const canHydrateInstance = shim;
 export const canHydrateTextInstance = shim;
 export const canHydrateSuspenseInstance = shim;
-export const isHydratableResource = shim;
 export const isSuspenseInstancePending = shim;
 export const isSuspenseInstanceFallback = shim;
 export const getSuspenseInstanceFallbackErrorDetails = shim;
 export const registerSuspenseInstanceRetry = shim;
-export const getMatchingResourceInstance = shim;
 export const getNextHydratableSibling = shim;
 export const getFirstHydratableChild = shim;
 export const getFirstHydratableChildWithinContainer = shim;

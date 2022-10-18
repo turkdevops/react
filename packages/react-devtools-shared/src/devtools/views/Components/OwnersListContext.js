@@ -7,6 +7,8 @@
  * @flow
  */
 
+import type {ReactContext} from 'shared/ReactTypes';
+
 import * as React from 'react';
 import {createContext, useCallback, useContext, useEffect} from 'react';
 import {createResource} from '../../cache';
@@ -23,7 +25,9 @@ import type {Resource, Thenable} from '../../cache';
 
 type Context = (id: number) => Array<SerializedElement> | null;
 
-const OwnersListContext = createContext<Context>(((null: any): Context));
+const OwnersListContext: ReactContext<Context> = createContext<Context>(
+  ((null: any): Context),
+);
 OwnersListContext.displayName = 'OwnersListContext';
 
 type ResolveFn = (ownersList: Array<SerializedElement> | null) => void;
@@ -41,14 +45,20 @@ const resource: Resource<
   (element: Element) => {
     const request = inProgressRequests.get(element);
     if (request != null) {
+      // $FlowFixMe[incompatible-call] found when upgrading Flow
       return request.promise;
     }
 
-    let resolveFn = ((null: any): ResolveFn);
+    let resolveFn:
+      | ResolveFn
+      | ((
+          result: Promise<Array<SerializedElement>> | Array<SerializedElement>,
+        ) => void) = ((null: any): ResolveFn);
     const promise = new Promise(resolve => {
       resolveFn = resolve;
     });
 
+    // $FlowFixMe[incompatible-call] found when upgrading Flow
     inProgressRequests.set(element, {promise, resolveFn});
 
     return promise;
@@ -61,7 +71,7 @@ type Props = {
   children: React$Node,
 };
 
-function OwnersListContextController({children}: Props) {
+function OwnersListContextController({children}: Props): React.Node {
   const bridge = useContext(BridgeContext);
   const store = useContext(StoreContext);
   const {ownerID} = useContext(TreeStateContext);

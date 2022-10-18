@@ -41,9 +41,9 @@ import {
   LOCAL_STORAGE_SHOW_INLINE_WARNINGS_AND_ERRORS_KEY,
   LOCAL_STORAGE_HIDE_CONSOLE_LOGS_IN_STRICT_MODE,
 } from './constants';
-import {ElementTypeRoot} from 'react-devtools-shared/src/types';
 import {ComponentFilterElementType, ElementTypeHostComponent} from './types';
 import {
+  ElementTypeRoot,
   ElementTypeClass,
   ElementTypeForwardRef,
   ElementTypeFunction,
@@ -55,6 +55,9 @@ import isArray from './isArray';
 
 import type {ComponentFilter, ElementType} from './types';
 import type {LRUCache} from 'react-devtools-shared/src/types';
+
+// $FlowFixMe[method-unbinding]
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const cachedDisplayNames: WeakMap<Function, string> = new WeakMap();
 
@@ -596,6 +599,7 @@ export function getDataType(data: Object): DataType {
       } else if (data.constructor && data.constructor.name === 'RegExp') {
         return 'regexp';
       } else {
+        // $FlowFixMe[method-unbinding]
         const toStringValue = Object.prototype.toString.call(data);
         if (toStringValue === '[object Date]') {
           return 'date';
@@ -610,6 +614,7 @@ export function getDataType(data: Object): DataType {
       return 'symbol';
     case 'undefined':
       if (
+        // $FlowFixMe[method-unbinding]
         Object.prototype.toString.call(data) === '[object HTMLAllCollection]'
       ) {
         return 'html_all_collection';

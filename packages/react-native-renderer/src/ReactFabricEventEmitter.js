@@ -7,20 +7,24 @@
  * @flow
  */
 
-import type {AnyNativeEvent} from './legacy-events/PluginModuleType';
+import type {
+  AnyNativeEvent,
+  LegacyPluginModule,
+} from './legacy-events/PluginModuleType';
 import type {Fiber} from 'react-reconciler/src/ReactInternalTypes';
-import type {LegacyPluginModule} from './legacy-events/PluginModuleType';
 import type {ReactSyntheticEvent} from './legacy-events/ReactSyntheticEventType';
 import type {
   RNTopLevelEventType,
   TopLevelType,
 } from './legacy-events/TopLevelEventTypes';
 
-import {registrationNameModules} from './legacy-events/EventPluginRegistry';
+import {
+  registrationNameModules,
+  plugins,
+} from './legacy-events/EventPluginRegistry';
 import {batchedUpdates} from './legacy-events/ReactGenericBatching';
 import accumulateInto from './legacy-events/accumulateInto';
 
-import {plugins} from './legacy-events/EventPluginRegistry';
 import getListeners from './ReactNativeGetListeners';
 import {runEventsInBatch} from './legacy-events/EventBatching';
 
@@ -115,7 +119,9 @@ export function dispatchEvent(
     // Note that extracted events are *not* emitted,
     // only events that have a 1:1 mapping with a native event, at least for now.
     const event = {eventName: topLevelType, nativeEvent};
+    // $FlowFixMe[class-object-subtyping] found when upgrading Flow
     RawEventEmitter.emit(topLevelType, event);
+    // $FlowFixMe[class-object-subtyping] found when upgrading Flow
     RawEventEmitter.emit('*', event);
 
     // Heritage plugin event system

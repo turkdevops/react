@@ -101,10 +101,6 @@ function nextHook(): null | Hook {
   return hook;
 }
 
-function getCacheForType<T>(resourceType: () => T): T {
-  throw new Error('Not implemented.');
-}
-
 function readContext<T>(context: ReactContext<T>): T {
   // For now we don't expose readContext usage in the hooks debugging info.
   return context._currentValue;
@@ -217,7 +213,7 @@ function useImperativeHandle<T>(
   // and if there is a ref callback it might not store it but if it does we
   // have no way of knowing where. So let's only enable introspection of the
   // ref itself if it is using the object form.
-  let instance = undefined;
+  let instance: ?T = undefined;
   if (ref !== null && typeof ref === 'object') {
     instance = ref.current;
   }
@@ -331,7 +327,6 @@ function useId(): string {
 }
 
 const Dispatcher: DispatcherType = {
-  getCacheForType,
   readContext,
   useCacheRefresh,
   useCallback,
@@ -367,7 +362,11 @@ const DispatcherProxyHandler = {
   },
 };
 
-const DispatcherProxy = new Proxy(Dispatcher, DispatcherProxyHandler);
+// `Proxy` may not exist on some platforms
+const DispatcherProxy =
+  typeof Proxy === 'undefined'
+    ? Dispatcher
+    : new Proxy(Dispatcher, DispatcherProxyHandler);
 
 // Inspect
 
@@ -712,6 +711,7 @@ export function inspectHooks<Props>(
   } finally {
     readHookLog = hookLog;
     hookLog = [];
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     currentDispatcher.current = previousDispatcher;
   }
   const rootStack = ErrorStackParser.parse(ancestorStackError);
@@ -719,7 +719,7 @@ export function inspectHooks<Props>(
 }
 
 function setupContexts(contextMap: Map<ReactContext<any>, any>, fiber: Fiber) {
-  let current = fiber;
+  let current: null | Fiber = fiber;
   while (current) {
     if (current.tag === ContextProvider) {
       const providerType: ReactProviderType<any> = current.type;

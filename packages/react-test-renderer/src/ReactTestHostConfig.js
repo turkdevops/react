@@ -46,6 +46,8 @@ export * from 'react-reconciler/src/ReactFiberHostConfigWithNoPersistence';
 export * from 'react-reconciler/src/ReactFiberHostConfigWithNoHydration';
 export * from 'react-reconciler/src/ReactFiberHostConfigWithNoTestSelectors';
 export * from 'react-reconciler/src/ReactFiberHostConfigWithNoMicrotasks';
+export * from 'react-reconciler/src/ReactFiberHostConfigWithNoResources';
+export * from 'react-reconciler/src/ReactFiberHostConfigWithNoSingletons';
 
 const NO_CONTEXT = {};
 const UPDATE_SIGNAL = {};
@@ -56,7 +58,7 @@ if (__DEV__) {
   Object.freeze(UPDATE_SIGNAL);
 }
 
-export function getPublicInstance(inst: Instance | TextInstance): * {
+export function getPublicInstance(inst: Instance | TextInstance): $FlowFixMe {
   switch (inst.tag) {
     case 'INSTANCE':
       const createNodeMock = inst.rootContainerInstance.createNodeMock;
@@ -282,7 +284,7 @@ export function unhideTextInstance(
   textInstance.isHidden = false;
 }
 
-export function getInstanceFromNode(mockNode: Object) {
+export function getInstanceFromNode(mockNode: Object): Object | null {
   const instance = nodeToInstanceMap.get(mockNode);
   if (instance !== undefined) {
     return instance.internalInstanceHandle;
@@ -319,5 +321,13 @@ export function logRecoverableError(error: mixed): void {
 }
 
 export function requestPostPaintCallback(callback: (time: number) => void) {
+  // noop
+}
+
+export function prepareRendererToRender(container: Container): void {
+  // noop
+}
+
+export function resetRendererAfterRender(): void {
   // noop
 }

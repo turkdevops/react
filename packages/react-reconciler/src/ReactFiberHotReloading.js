@@ -7,10 +7,9 @@
  * @flow
  */
 
-import type {Fiber} from './ReactInternalTypes';
+import type {Fiber, FiberRoot} from './ReactInternalTypes';
 import type {ReactElement} from '../../shared/ReactElementType';
 import type {Instance} from './ReactFiberHostConfig';
-import type {FiberRoot} from './ReactInternalTypes';
 import type {ReactNodeList} from 'shared/ReactTypes';
 
 import {enableNewReconciler} from 'shared/ReactFeatureFlags';
@@ -63,13 +62,13 @@ export type FindHostInstancesForRefresh = (
 export const setRefreshHandler: (
   handler: RefreshHandler | null,
 ) => void = enableNewReconciler ? setRefreshHandler_new : setRefreshHandler_old;
-export const resolveFunctionForHotReloading = enableNewReconciler
+export const resolveFunctionForHotReloading: typeof resolveFunctionForHotReloading_new = enableNewReconciler
   ? resolveFunctionForHotReloading_new
   : resolveFunctionForHotReloading_old;
-export const resolveClassForHotReloading = enableNewReconciler
+export const resolveClassForHotReloading: typeof resolveClassForHotReloading_new = enableNewReconciler
   ? resolveClassForHotReloading_new
   : resolveClassForHotReloading_old;
-export const resolveForwardRefForHotReloading = enableNewReconciler
+export const resolveForwardRefForHotReloading: typeof resolveForwardRefForHotReloading_new = enableNewReconciler
   ? resolveForwardRefForHotReloading_new
   : resolveForwardRefForHotReloading_old;
 export const isCompatibleFamilyForHotReloading: (

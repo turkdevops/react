@@ -7,6 +7,8 @@
  * @flow
  */
 
+import type {ReactContext} from 'shared/ReactTypes';
+
 import * as React from 'react';
 import {
   createContext,
@@ -41,7 +43,9 @@ type Context = {
   getStyleAndLayout: GetStyleAndLayout,
 };
 
-const NativeStyleContext = createContext<Context>(((null: any): Context));
+const NativeStyleContext: ReactContext<Context> = createContext<Context>(
+  ((null: any): Context),
+);
 NativeStyleContext.displayName = 'NativeStyleContext';
 
 type ResolveFn = (styleAndLayout: StyleAndLayoutFrontend) => void;
@@ -62,7 +66,11 @@ const resource: Resource<
       return request.promise;
     }
 
-    let resolveFn = ((null: any): ResolveFn);
+    let resolveFn:
+      | ResolveFn
+      | ((
+          result: Promise<StyleAndLayoutFrontend> | StyleAndLayoutFrontend,
+        ) => void) = ((null: any): ResolveFn);
     const promise = new Promise(resolve => {
       resolveFn = resolve;
     });
@@ -79,7 +87,7 @@ type Props = {
   children: React$Node,
 };
 
-function NativeStyleContextController({children}: Props) {
+function NativeStyleContextController({children}: Props): React.Node {
   const bridge = useContext<FrontendBridge>(BridgeContext);
   const store = useContext<Store>(StoreContext);
 

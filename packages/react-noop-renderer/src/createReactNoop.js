@@ -272,6 +272,8 @@ function createReactNoop(reconciler: Function, useMutation: boolean) {
   }
 
   const sharedHostConfig = {
+    supportsSingletons: false,
+
     getRootHostContext() {
       return NO_CONTEXT;
     },
@@ -478,6 +480,8 @@ function createReactNoop(reconciler: Function, useMutation: boolean) {
       const endTime = Scheduler.unstable_now();
       callback(endTime);
     },
+    prepareRendererToRender() {},
+    resetRendererAfterRender() {},
   };
 
   const hostConfig = useMutation

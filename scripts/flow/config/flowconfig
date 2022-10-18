@@ -14,6 +14,7 @@
 .*/node_modules/devtools-timeline-model/.*
 .*/node_modules/create-react-class/.*
 .*/node_modules/react-native-web/.*
+.*/node_modules/fbjs/lib/keyMirrorRecursive.js.flow
 .*/__mocks__/.*
 .*/__tests__/.*
 
@@ -39,16 +40,13 @@
 untyped-type-import=error
 
 [options]
-server.max_workers=4
-esproposal.class_static_fields=enable
-esproposal.class_instance_fields=enable
-esproposal.optional_chaining=enable
+%CI_MAX_WORKERS%
 exact_by_default=true
 munge_underscores=false
-types_first=false
+enforce_local_inference_annotations=false
 
 # Substituted by createFlowConfig.js:
 %REACT_RENDERER_FLOW_OPTIONS%
 
 [version]
-^0.142.0
+^0.190.0

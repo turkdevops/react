@@ -7,7 +7,10 @@
  * @flow
  */
 
-import type {Dispatcher as DispatcherType} from 'react-reconciler/src/ReactInternalTypes';
+import type {
+  Dispatcher,
+  EventFunctionWrapper,
+} from 'react-reconciler/src/ReactInternalTypes';
 
 import type {
   MutableSource,
@@ -36,12 +39,14 @@ import {makeId} from './ReactServerFormatConfig';
 import {
   enableCache,
   enableUseHook,
+  enableUseEventHook,
   enableUseMemoCacheHook,
 } from 'shared/ReactFeatureFlags';
 import is from 'shared/objectIs';
 import {
   REACT_SERVER_CONTEXT_TYPE,
   REACT_CONTEXT_TYPE,
+  REACT_MEMO_CACHE_SENTINEL,
 } from 'shared/ReactSymbols';
 
 type BasicStateAction<S> = (S => S) | S;
@@ -143,7 +148,9 @@ function areHookInputsEqual(
       );
     }
   }
+  // $FlowFixMe[incompatible-use] found when upgrading Flow
   for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     if (is(nextDeps[i], prevDeps[i])) {
       continue;
     }
@@ -268,12 +275,6 @@ export function resetHooksState(): void {
   workInProgressHook = null;
 }
 
-function getCacheForType<T>(resourceType: () => T): T {
-  // TODO: This should silently mark this as client rendered since it's not necessarily
-  // considered an error. It needs to work for things like Flight though.
-  throw new Error('Not implemented.');
-}
-
 function readContext<T>(context: ReactContext<T>): T {
   if (__DEV__) {
     if (isInHookUserCodeInDev) {
@@ -335,9 +336,11 @@ export function useReducer<S, I, A>(
       // Render phase updates are stored in a map of queue -> linked list
       const firstRenderPhaseUpdate = renderPhaseUpdates.get(queue);
       if (firstRenderPhaseUpdate !== undefined) {
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         renderPhaseUpdates.delete(queue);
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         let newState = workInProgressHook.memoizedState;
-        let update = firstRenderPhaseUpdate;
+        let update: Update<any> = firstRenderPhaseUpdate;
         do {
           // Process this render phase update. We don't have to check the
           // priority because it will always be the same as the current
@@ -350,14 +353,17 @@ export function useReducer<S, I, A>(
           if (__DEV__) {
             isInHookUserCodeInDev = false;
           }
+          // $FlowFixMe[incompatible-type] we bail out when we get a null
           update = update.next;
         } while (update !== null);
 
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         workInProgressHook.memoizedState = newState;
 
         return [newState, dispatch];
       }
     }
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     return [workInProgressHook.memoizedState, dispatch];
   } else {
     if (__DEV__) {
@@ -377,7 +383,9 @@ export function useReducer<S, I, A>(
     if (__DEV__) {
       isInHookUserCodeInDev = false;
     }
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     workInProgressHook.memoizedState = initialState;
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     const queue: UpdateQueue<A> = (workInProgressHook.queue = {
       last: null,
       dispatch: null,
@@ -387,6 +395,7 @@ export function useReducer<S, I, A>(
       currentlyRenderingComponent,
       queue,
     ): any));
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     return [workInProgressHook.memoizedState, dispatch];
   }
 }
@@ -416,6 +425,7 @@ function useMemo<T>(nextCreate: () => T, deps: Array<mixed> | void | null): T {
   if (__DEV__) {
     isInHookUserCodeInDev = false;
   }
+  // $FlowFixMe[incompatible-use] found when upgrading Flow
   workInProgressHook.memoizedState = [nextValue, nextDeps];
   return nextValue;
 }
@@ -429,6 +439,7 @@ function useRef<T>(initialValue: T): {current: T} {
     if (__DEV__) {
       Object.seal(ref);
     }
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
     workInProgressHook.memoizedState = ref;
     return ref;
   } else {
@@ -479,6 +490,7 @@ function dispatchAction<A>(
     }
     const firstRenderPhaseUpdate = renderPhaseUpdates.get(queue);
     if (firstRenderPhaseUpdate === undefined) {
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       renderPhaseUpdates.set(queue, update);
     } else {
       // Append the update to the end of the list.
@@ -500,6 +512,18 @@ export function useCallback<T>(
   deps: Array<mixed> | void | null,
 ): T {
   return useMemo(() => callback, deps);
+}
+
+function throwOnUseEventCall() {
+  throw new Error(
+    "A function wrapped in useEvent can't be called during rendering.",
+  );
+}
+
+export function useEvent<Args, Return, F: (...Array<Args>) => Return>(
+  callback: F,
+): EventFunctionWrapper<Args, Return, F> {
+  return throwOnUseEventCall;
 }
 
 // TODO Decide on how to implement this hook for server rendering.
@@ -562,6 +586,7 @@ function useId(): string {
 
 function use<T>(usable: Usable<T>): T {
   if (usable !== null && typeof usable === 'object') {
+    // $FlowFixMe[method-unbinding]
     if (typeof usable.then === 'function') {
       // This is a thenable.
       const thenable: Thenable<T> = (usable: any);
@@ -642,12 +667,16 @@ function useCacheRefresh(): <T>(?() => T, ?T) => void {
 }
 
 function useMemoCache(size: number): Array<any> {
-  return new Array(size);
+  const data = new Array(size);
+  for (let i = 0; i < size; i++) {
+    data[i] = REACT_MEMO_CACHE_SENTINEL;
+  }
+  return data;
 }
 
 function noop(): void {}
 
-export const Dispatcher: DispatcherType = {
+export const HooksDispatcher: Dispatcher = {
   readContext,
   useContext,
   useMemo,
@@ -672,14 +701,16 @@ export const Dispatcher: DispatcherType = {
 };
 
 if (enableCache) {
-  Dispatcher.getCacheForType = getCacheForType;
-  Dispatcher.useCacheRefresh = useCacheRefresh;
+  HooksDispatcher.useCacheRefresh = useCacheRefresh;
+}
+if (enableUseEventHook) {
+  HooksDispatcher.useEvent = useEvent;
 }
 if (enableUseMemoCacheHook) {
-  Dispatcher.useMemoCache = useMemoCache;
+  HooksDispatcher.useMemoCache = useMemoCache;
 }
 if (enableUseHook) {
-  Dispatcher.use = use;
+  HooksDispatcher.use = use;
 }
 
 export let currentResponseState: null | ResponseState = (null: any);

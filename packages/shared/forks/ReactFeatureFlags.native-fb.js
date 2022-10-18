@@ -13,11 +13,11 @@ import typeof * as ExportsType from './ReactFeatureFlags.native-fb';
 // NOTE: There are no flags, currently. Uncomment the stuff below if we add one.
 // Re-export dynamic flags from the internal module. Intentionally using *
 // because this import is compiled to a `require` call.
-// import * as dynamicFlags from 'ReactNativeInternalFeatureFlags';
+import * as dynamicFlags from 'ReactNativeInternalFeatureFlags';
 
 // We destructure each value before re-exporting to avoid a dynamic look-up on
 // the exports object every time a flag is read.
-// export const {} = dynamicFlags;
+export const {enableUseRefAccessWarning} = dynamicFlags;
 
 // The rest of the flags are static for better dead code elimination.
 export const enableDebugTracing = false;
@@ -51,7 +51,8 @@ export const enableSuspenseAvoidThisFallback = false;
 export const enableSuspenseAvoidThisFallbackFizz = false;
 export const enableCPUSuspense = true;
 export const enableUseHook = false;
-export const enableUseMemoCacheHook = false;
+export const enableUseMemoCacheHook = true;
+export const enableUseEventHook = false;
 export const enableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay = true;
 export const enableClientRenderFallbackOnTextMismatch = true;
 export const enableComponentStackLocations = false;
@@ -66,7 +67,6 @@ export const deferRenderPhaseUpdateToNextBatch = false;
 
 export const enableStrictEffects = __DEV__;
 export const createRootStrictEffectsByDefault = false;
-export const enableUseRefAccessWarning = false;
 
 export const disableSchedulerTimeoutInWorkLoop = false;
 export const enableLazyContextPropagation = false;
@@ -83,8 +83,10 @@ export const enableUseMutableSource = true;
 export const enableTransitionTracing = false;
 
 export const enableFloat = false;
+export const enableHostSingletons = false;
+
+export const useModernStrictMode = false;
+export const enableFizzExternalRuntime = false;
+
 // Flow magic to verify the exports of this file match the original version.
-// eslint-disable-next-line no-unused-vars
-type Check<_X, Y: _X, X: Y = _X> = null;
-// eslint-disable-next-line no-unused-expressions
-(null: Check<ExportsType, FeatureFlagsType>);
+((((null: any): ExportsType): FeatureFlagsType): ExportsType);

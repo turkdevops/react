@@ -7,7 +7,7 @@
  * @flow
  */
 
-import type {Fiber} from './ReactInternalTypes';
+import type {Fiber, FiberRoot} from './ReactInternalTypes';
 import type {RootState} from './ReactFiberRoot.new';
 import type {Lanes, Lane} from './ReactFiberLane.new';
 import type {
@@ -15,7 +15,6 @@ import type {
   ReactContext,
   Wakeable,
 } from 'shared/ReactTypes';
-import type {FiberRoot} from './ReactInternalTypes';
 import type {
   Instance,
   Type,
@@ -33,6 +32,13 @@ import type {Cache} from './ReactFiberCacheComponent.new';
 import {
   enableSuspenseAvoidThisFallback,
   enableLegacyHidden,
+  enableHostSingletons,
+  enableSuspenseCallback,
+  enableScopeAPI,
+  enableProfilerTimer,
+  enableCache,
+  enableTransitionTracing,
+  enableFloat,
 } from 'shared/ReactFeatureFlags';
 
 import {resetWorkInProgressVersions as resetMutableSourceWorkInProgressVersions} from './ReactMutableSource.new';
@@ -45,6 +51,8 @@ import {
   ClassComponent,
   HostRoot,
   HostComponent,
+  HostResource,
+  HostSingleton,
   HostText,
   HostPortal,
   ContextProvider,
@@ -87,11 +95,14 @@ import {
 import {
   createInstance,
   createTextInstance,
+  resolveSingletonInstance,
   appendInitialChild,
   finalizeInitialChildren,
   prepareUpdate,
   supportsMutation,
   supportsPersistence,
+  supportsResources,
+  supportsSingletons,
   cloneInstance,
   cloneHiddenInstance,
   cloneHiddenTextInstance,
@@ -138,13 +149,6 @@ import {
   hasUnhydratedTailNodes,
   upgradeHydrationErrorsToRecoverable,
 } from './ReactFiberHydrationContext.new';
-import {
-  enableSuspenseCallback,
-  enableScopeAPI,
-  enableProfilerTimer,
-  enableCache,
-  enableTransitionTracing,
-} from 'shared/ReactFeatureFlags';
 import {
   renderDidSuspend,
   renderDidSuspendDelayIfPossible,
@@ -224,10 +228,16 @@ if (supportsMutation) {
     while (node !== null) {
       if (node.tag === HostComponent || node.tag === HostText) {
         appendInitialChild(parent, node.stateNode);
-      } else if (node.tag === HostPortal) {
+      } else if (
+        node.tag === HostPortal ||
+        (enableHostSingletons && supportsSingletons
+          ? node.tag === HostSingleton
+          : false)
+      ) {
         // If we have a portal child, then we don't want to traverse
         // down its children. Instead, we'll get insertions from each child in
         // the portal directly.
+        // If we have a HostSingleton it will be placed independently
       } else if (node.child !== null) {
         node.child.return = node;
         node = node.child;
@@ -236,12 +246,15 @@ if (supportsMutation) {
       if (node === workInProgress) {
         return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       while (node.sibling === null) {
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         if (node.return === null || node.return === workInProgress) {
           return;
         }
         node = node.return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       node.sibling.return = node.return;
       node = node.sibling;
     }
@@ -351,17 +364,19 @@ if (supportsMutation) {
         node = node.child;
         continue;
       }
-      // $FlowFixMe This is correct but Flow is confused by the labeled break.
       node = (node: Fiber);
       if (node === workInProgress) {
         return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       while (node.sibling === null) {
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         if (node.return === null || node.return === workInProgress) {
           return;
         }
         node = node.return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       node.sibling.return = node.return;
       node = node.sibling;
     }
@@ -416,17 +431,19 @@ if (supportsMutation) {
         node = node.child;
         continue;
       }
-      // $FlowFixMe This is correct but Flow is confused by the labeled break.
       node = (node: Fiber);
       if (node === workInProgress) {
         return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       while (node.sibling === null) {
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         if (node.return === null || node.return === workInProgress) {
           return;
         }
         node = node.return;
       }
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
       node.sibling.return = node.return;
       node = node.sibling;
     }
@@ -954,6 +971,79 @@ function completeWork(
       }
       return null;
     }
+    case HostResource: {
+      if (enableFloat && supportsResources) {
+        popHostContext(workInProgress);
+        const currentRef = current ? current.ref : null;
+        if (currentRef !== workInProgress.ref) {
+          markRef(workInProgress);
+        }
+        if (
+          current === null ||
+          current.memoizedState !== workInProgress.memoizedState
+        ) {
+          // The workInProgress resource is different than the current one or the current
+          // one does not exist
+          markUpdate(workInProgress);
+        }
+        bubbleProperties(workInProgress);
+        return null;
+      }
+    }
+    // eslint-disable-next-line-no-fallthrough
+    case HostSingleton: {
+      if (enableHostSingletons && supportsSingletons) {
+        popHostContext(workInProgress);
+        const rootContainerInstance = getRootHostContainer();
+        const type = workInProgress.type;
+        if (current !== null && workInProgress.stateNode != null) {
+          updateHostComponent(current, workInProgress, type, newProps);
+
+          if (current.ref !== workInProgress.ref) {
+            markRef(workInProgress);
+          }
+        } else {
+          if (!newProps) {
+            if (workInProgress.stateNode === null) {
+              throw new Error(
+                'We must have new props for new mounts. This error is likely ' +
+                  'caused by a bug in React. Please file an issue.',
+              );
+            }
+
+            // This can happen when we abort work.
+            bubbleProperties(workInProgress);
+            return null;
+          }
+
+          const currentHostContext = getHostContext();
+          const wasHydrated = popHydrationState(workInProgress);
+          if (wasHydrated) {
+            // We ignore the boolean indicating there is an updateQueue because
+            // it is used only to set text children and HostSingletons do not
+            // use them.
+            prepareToHydrateHostInstance(workInProgress, currentHostContext);
+          } else {
+            workInProgress.stateNode = resolveSingletonInstance(
+              type,
+              newProps,
+              rootContainerInstance,
+              currentHostContext,
+              true,
+            );
+            markUpdate(workInProgress);
+          }
+
+          if (workInProgress.ref !== null) {
+            // If there is a ref on a host node we need to schedule a callback
+            markRef(workInProgress);
+          }
+        }
+        bubbleProperties(workInProgress);
+        return null;
+      }
+    }
+    // eslint-disable-next-line-no-fallthrough
     case HostComponent: {
       popHostContext(workInProgress);
       const type = workInProgress.type;
@@ -1002,9 +1092,7 @@ function completeWork(
             currentHostContext,
             workInProgress,
           );
-
           appendAllChildren(instance, workInProgress, false, false);
-
           workInProgress.stateNode = instance;
 
           // Certain renderers require commit-time effects for initial mount.

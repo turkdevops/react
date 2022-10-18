@@ -14,11 +14,14 @@ module.exports = [
       'react-dom/unstable_testing',
       'react-dom/src/server/ReactDOMFizzServerNode.js',
       'react-dom/static.node',
+      'react-dom/server-rendering-stub',
+      'react-dom/src/server/ReactDOMServerExternalRuntime.js',
       'react-server-dom-webpack/writer.node.server',
       'react-server-dom-webpack',
     ],
     paths: [
       'react-dom',
+      'react-dom-bindings',
       'react-dom/client',
       'react-dom/server',
       'react-dom/server.node',
@@ -36,6 +39,7 @@ module.exports = [
       'react-devtools-shell',
       'react-devtools-shared',
       'react-interactions',
+      'shared/ReactDOMSharedInternals',
     ],
     isFlowTyped: true,
     isServerSupported: true,
@@ -47,11 +51,14 @@ module.exports = [
       'react-dom/unstable_testing',
       'react-dom/src/server/ReactDOMFizzServerBrowser.js',
       'react-dom/static.browser',
+      'react-dom/server-rendering-stub',
+      'react-dom/src/server/ReactDOMServerExternalRuntime.js',
       'react-server-dom-webpack/writer.browser.server',
       'react-server-dom-webpack',
     ],
     paths: [
       'react-dom',
+      'react-dom-bindings',
       'react-dom/client',
       'react-dom/server.browser',
       'react-dom/static.browser',
@@ -66,6 +73,7 @@ module.exports = [
       'react-devtools-core',
       'react-devtools-shell',
       'react-devtools-shared',
+      'shared/ReactDOMSharedInternals',
     ],
     isFlowTyped: true,
     isServerSupported: true,
@@ -78,6 +86,7 @@ module.exports = [
     ],
     paths: [
       'react-dom',
+      'react-dom-bindings',
       'react-server-dom-webpack',
       'react-dom/src/server/ReactDOMLegacyServerImpl.js', // not an entrypoint, but only usable in *Brower and *Node files
       'react-dom/src/server/ReactDOMLegacyServerBrowser.js', // react-dom/server.browser
@@ -85,6 +94,7 @@ module.exports = [
       'react-dom/src/server/ReactDOMLegacyServerNode.classic.fb.js',
       'react-dom/src/server/ReactDOMLegacyServerNodeStream.js', // file indirection to support partial forking of some methods in *Node
       'react-client/src/ReactFlightClientStream.js', // We can only type check this in streaming configurations.
+      'shared/ReactDOMSharedInternals',
     ],
     isFlowTyped: true,
     isServerSupported: true,
@@ -124,7 +134,12 @@ module.exports = [
       'react-server-dom-relay/server',
       'react-server-dom-relay/src/ReactDOMServerFB.js',
     ],
-    paths: ['react-dom', 'react-server-dom-relay'],
+    paths: [
+      'react-dom',
+      'react-dom-bindings',
+      'react-server-dom-relay',
+      'shared/ReactDOMSharedInternals',
+    ],
     isFlowTyped: true,
     isServerSupported: true,
   },

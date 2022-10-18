@@ -19,13 +19,17 @@ import type {
   Wakeable,
   Usable,
 } from 'shared/ReactTypes';
-import type {SuspenseInstance} from './ReactFiberHostConfig';
 import type {WorkTag} from './ReactWorkTags';
 import type {TypeOfMode} from './ReactTypeOfMode';
 import type {Flags} from './ReactFiberFlags';
 import type {Lane, Lanes, LaneMap} from './ReactFiberLane.old';
 import type {RootTag} from './ReactRootTags';
-import type {TimeoutHandle, NoTimeout} from './ReactFiberHostConfig';
+import type {
+  Container,
+  TimeoutHandle,
+  NoTimeout,
+  SuspenseInstance,
+} from './ReactFiberHostConfig';
 import type {Cache} from './ReactFiberCacheComponent.old';
 // Doing this because there's a merge conflict because of the way sync-reconciler-fork
 // is implemented
@@ -42,6 +46,7 @@ export type HookType =
   | 'useContext'
   | 'useRef'
   | 'useEffect'
+  | 'useEvent'
   | 'useInsertionEffect'
   | 'useLayoutEffect'
   | 'useCallback'
@@ -209,7 +214,7 @@ type BaseFiberRootProperties = {
   tag: RootTag,
 
   // Any additional information from the host associated with this root.
-  containerInfo: any,
+  containerInfo: Container,
   // Used only by persistent updates.
   pendingChildren: any,
   // The currently active root fiber. This is the mutable root of the tree.
@@ -233,7 +238,7 @@ type BaseFiberRootProperties = {
 
   // Node returned by Scheduler.scheduleCallback. Represents the next rendering
   // task that the root will work on.
-  callbackNode: *,
+  callbackNode: any,
   callbackPriority: Lane,
   eventTimes: LaneMap<number>,
   expirationTimes: LaneMap<number>,
@@ -283,6 +288,17 @@ export type SuspenseHydrationCallbacks = {
 // The follow fields are only used by enableSuspenseCallback for hydration.
 type SuspenseCallbackOnlyFiberRootProperties = {
   hydrationCallbacks: null | SuspenseHydrationCallbacks,
+};
+
+// A wrapper callable object around a useEvent callback that throws if the callback is called during
+// rendering. The _impl property points to the actual implementation.
+export type EventFunctionWrapper<
+  Args,
+  Return,
+  F: (...Array<Args>) => Return,
+> = {
+  (): F,
+  _impl: F,
 };
 
 export type TransitionTracingCallbacks = {
@@ -361,8 +377,6 @@ type Dispatch<A> = A => void;
 
 export type Dispatcher = {
   use?: <T>(Usable<T>) => T,
-  getCacheSignal?: () => AbortSignal,
-  getCacheForType?: <T>(resourceType: () => T) => T,
   readContext<T>(context: ReactContext<T>): T,
   useState<S>(initialState: (() => S) | S): [S, Dispatch<BasicStateAction<S>>],
   useReducer<S, I, A>(
@@ -376,6 +390,9 @@ export type Dispatcher = {
     create: () => (() => void) | void,
     deps: Array<mixed> | void | null,
   ): void,
+  useEvent?: <Args, Return, F: (...Array<Args>) => Return>(
+    callback: F,
+  ) => EventFunctionWrapper<Args, Return, F>,
   useInsertionEffect(
     create: () => (() => void) | void,
     deps: Array<mixed> | void | null,
@@ -412,4 +429,9 @@ export type Dispatcher = {
   useMemoCache?: (size: number) => Array<any>,
 
   unstable_isNewReconciler?: boolean,
+};
+
+export type CacheDispatcher = {
+  getCacheSignal: () => AbortSignal,
+  getCacheForType: <T>(resourceType: () => T) => T,
 };

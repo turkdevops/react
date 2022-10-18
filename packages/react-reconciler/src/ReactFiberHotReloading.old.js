@@ -23,6 +23,7 @@ import type {
   ScheduleRoot,
 } from './ReactFiberHotReloading';
 
+import {enableHostSingletons, enableFloat} from 'shared/ReactFeatureFlags';
 import {
   flushSync,
   scheduleUpdateOnFiber,
@@ -37,6 +38,8 @@ import {
   FunctionComponent,
   ForwardRef,
   HostComponent,
+  HostResource,
+  HostSingleton,
   HostPortal,
   HostRoot,
   MemoComponent,
@@ -47,9 +50,9 @@ import {
   REACT_MEMO_TYPE,
   REACT_LAZY_TYPE,
 } from 'shared/ReactSymbols';
+import {supportsSingletons} from './ReactFiberHostConfig';
 
 let resolveFamily: RefreshHandler | null = null;
-// $FlowFixMe Flow gets confused by a WeakSet feature check below.
 let failedBoundaries: WeakSet<Fiber> | null = null;
 
 export const setRefreshHandler = (handler: RefreshHandler | null): void => {
@@ -189,6 +192,7 @@ export function isCompatibleFamilyForHotReloading(
       // then we would risk falsely saying two separate memo(Foo)
       // calls are equivalent because they wrap the same Foo function.
       const prevFamily = resolveFamily(prevType);
+      // $FlowFixMe[not-a-function] found when upgrading Flow
       if (prevFamily !== undefined && prevFamily === resolveFamily(nextType)) {
         return true;
       }
@@ -209,7 +213,6 @@ export function markFailedErrorBoundaryForHotReloading(fiber: Fiber) {
       return;
     }
     if (failedBoundaries === null) {
-      // $FlowFixMe Flow got confused by the feature check above.
       failedBoundaries = new WeakSet();
     }
     failedBoundaries.add(fiber);
@@ -300,6 +303,7 @@ function scheduleFibersWithFamiliesRecursively(
     if (failedBoundaries !== null) {
       if (
         failedBoundaries.has(fiber) ||
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
         (alternate !== null && failedBoundaries.has(alternate))
       ) {
         needsRemount = true;
@@ -423,6 +427,7 @@ function findHostInstancesForFiberShallowly(
     let node = fiber;
     while (true) {
       switch (node.tag) {
+        case HostSingleton:
         case HostComponent:
           hostInstances.add(node.stateNode);
           return;
@@ -449,7 +454,13 @@ function findChildHostInstancesForFiberShallowly(
     let node: Fiber = fiber;
     let foundHostInstances = false;
     while (true) {
-      if (node.tag === HostComponent) {
+      if (
+        node.tag === HostComponent ||
+        (enableFloat ? node.tag === HostResource : false) ||
+        (enableHostSingletons && supportsSingletons
+          ? node.tag === HostSingleton
+          : false)
+      ) {
         // We got a match.
         foundHostInstances = true;
         hostInstances.add(node.stateNode);

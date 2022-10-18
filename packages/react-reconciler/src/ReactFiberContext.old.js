@@ -24,7 +24,8 @@ if (__DEV__) {
   warnedAboutMissingGetChildContext = {};
 }
 
-export const emptyContextObject = {};
+// $FlowFixMe[incompatible-exact]
+export const emptyContextObject: {} = {};
 if (__DEV__) {
   Object.freeze(emptyContextObject);
 }
@@ -302,7 +303,7 @@ function findCurrentUnmaskedContext(fiber: Fiber): Object {
       );
     }
 
-    let node = fiber;
+    let node: Fiber = fiber;
     do {
       switch (node.tag) {
         case HostRoot:
@@ -315,6 +316,7 @@ function findCurrentUnmaskedContext(fiber: Fiber): Object {
           break;
         }
       }
+      // $FlowFixMe[incompatible-type] we bail out when we get a null
       node = node.return;
     } while (node !== null);
 

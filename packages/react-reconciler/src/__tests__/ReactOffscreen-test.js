@@ -8,6 +8,7 @@ let useState;
 let useLayoutEffect;
 let useEffect;
 let useMemo;
+let useRef;
 let startTransition;
 
 describe('ReactOffscreen', () => {
@@ -24,6 +25,7 @@ describe('ReactOffscreen', () => {
     useLayoutEffect = React.useLayoutEffect;
     useEffect = React.useEffect;
     useMemo = React.useMemo;
+    useRef = React.useRef;
     startTransition = React.startTransition;
   });
 
@@ -940,6 +942,62 @@ describe('ReactOffscreen', () => {
     ]);
   });
 
+  // @gate enableLegacyHidden
+  it('do not defer passive effects when prerendering a new LegacyHidden tree', async () => {
+    function Child({label}) {
+      useEffect(() => {
+        Scheduler.unstable_yieldValue('Mount ' + label);
+        return () => {
+          Scheduler.unstable_yieldValue('Unmount ' + label);
+        };
+      }, [label]);
+      return <Text text={label} />;
+    }
+
+    function App({showMore}) {
+      return (
+        <>
+          <Child label="Shell" />
+          <LegacyHidden
+            mode={showMore ? 'visible' : 'unstable-defer-without-hiding'}>
+            <Child label="More" />
+          </LegacyHidden>
+        </>
+      );
+    }
+
+    const root = ReactNoop.createRoot();
+
+    // Mount the app without showing the extra content
+    await act(async () => {
+      root.render(<App showMore={false} />);
+    });
+    expect(Scheduler).toHaveYielded([
+      // First mount the outer visible shell
+      'Shell',
+      'Mount Shell',
+
+      // Then prerender the hidden extra context. Unlike Offscreen, the passive
+      // effects in the hidden tree *should* fire
+      'More',
+      'Mount More',
+    ]);
+
+    // The hidden content has been prerendered
+    expect(root).toMatchRenderedOutput(
+      <>
+        <span prop="Shell" />
+        <span prop="More" />
+      </>,
+    );
+
+    // Reveal the prerendered tree
+    await act(async () => {
+      root.render(<App showMore={true} />);
+    });
+    expect(Scheduler).toHaveYielded(['Shell', 'More']);
+  });
+
   // @gate enableOffscreen
   it('passive effects are connected and disconnected when the visibility changes', async () => {
     function Child({step}) {
@@ -1259,4 +1317,126 @@ describe('ReactOffscreen', () => {
       </div>,
     );
   });
+
+  describe('manual interactivity', () => {
+    // @gate enableOffscreen
+    it('should attach ref only for mode null', async () => {
+      let offscreenRef;
+
+      function App({mode}) {
+        offscreenRef = useRef(null);
+        return (
+          <Offscreen
+            mode={mode}
+            ref={ref => {
+              offscreenRef.current = ref;
+            }}>
+            <div />
+          </Offscreen>
+        );
+      }
+
+      const root = ReactNoop.createRoot();
+
+      await act(async () => {
+        root.render(<App mode={'manual'} />);
+      });
+
+      expect(offscreenRef.current).not.toBeNull();
+
+      await act(async () => {
+        root.render(<App mode={'visible'} />);
+      });
+
+      expect(offscreenRef.current).toBeNull();
+
+      await act(async () => {
+        root.render(<App mode={'hidden'} />);
+      });
+
+      expect(offscreenRef.current).toBeNull();
+
+      await act(async () => {
+        root.render(<App mode={'manual'} />);
+      });
+
+      expect(offscreenRef.current).not.toBeNull();
+    });
+  });
+
+  // @gate enableOffscreen
+  it('should detach ref if Offscreen is unmounted', async () => {
+    let offscreenRef;
+
+    function App({showOffscreen}) {
+      offscreenRef = useRef(null);
+      return showOffscreen ? (
+        <Offscreen
+          mode={'manual'}
+          ref={ref => {
+            offscreenRef.current = ref;
+          }}>
+          <div />
+        </Offscreen>
+      ) : null;
+    }
+
+    const root = ReactNoop.createRoot();
+
+    await act(async () => {
+      root.render(<App showOffscreen={true} />);
+    });
+
+    expect(offscreenRef.current).not.toBeNull();
+
+    await act(async () => {
+      root.render(<App showOffscreen={false} />);
+    });
+
+    expect(offscreenRef.current).toBeNull();
+
+    await act(async () => {
+      root.render(<App showOffscreen={true} />);
+    });
+
+    expect(offscreenRef.current).not.toBeNull();
+  });
+
+  // @gate enableOffscreen
+  it('should detach ref when parent Offscreen is hidden', async () => {
+    let offscreenRef;
+
+    function App({mode}) {
+      offscreenRef = useRef(null);
+      return (
+        <Offscreen mode={mode}>
+          <Offscreen mode={'manual'} ref={offscreenRef}>
+            <div />
+          </Offscreen>
+        </Offscreen>
+      );
+    }
+
+    const root = ReactNoop.createRoot();
+
+    await act(async () => {
+      root.render(<App mode={'hidden'} />);
+    });
+
+    expect(offscreenRef.current).toBeNull();
+
+    await act(async () => {
+      root.render(<App mode={'visible'} />);
+    });
+
+    expect(offscreenRef.current).not.toBeNull();
+
+    await act(async () => {
+      root.render(<App mode={'hidden'} />);
+    });
+
+    expect(offscreenRef.current).toBeNull();
+  });
+
+  // TODO: When attach/detach methods are implemented. Add tests for nested Offscreen case.
 });
