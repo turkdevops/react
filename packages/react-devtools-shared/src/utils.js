@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -55,6 +55,7 @@ import isArray from './isArray';
 
 import type {ComponentFilter, ElementType} from './types';
 import type {LRUCache} from 'react-devtools-shared/src/types';
+import type {BrowserTheme} from 'react-devtools-shared/src/devtools/views/DevTools';
 
 // $FlowFixMe[method-unbinding]
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -350,6 +351,18 @@ function parseBool(s: ?string): ?boolean {
   }
   if (s === 'false') {
     return false;
+  }
+}
+
+export function castBool(v: any): ?boolean {
+  if (v === true || v === false) {
+    return v;
+  }
+}
+
+export function castBrowserTheme(v: any): ?BrowserTheme {
+  if (v === 'light' || v === 'dark' || v === 'auto') {
+    return v;
   }
 }
 

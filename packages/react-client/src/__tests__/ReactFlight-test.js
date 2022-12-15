@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -27,7 +27,7 @@ describe('ReactFlight', () => {
 
     React = require('react');
     startTransition = React.startTransition;
-    use = React.experimental_use;
+    use = React.use;
     ReactNoop = require('react-noop-renderer');
     ReactNoopFlightServer = require('react-noop-renderer/flight-server');
     ReactNoopFlightClient = require('react-noop-renderer/flight-client');
@@ -57,6 +57,9 @@ describe('ReactFlight', () => {
               ' may provide additional details about the nature of the error.',
           );
           expect(this.state.error.digest).toContain(this.props.expectedMessage);
+          expect(this.state.error.stack).toBe(
+            'Error: ' + this.state.error.message,
+          );
         }
       }
       render() {

@@ -50,12 +50,12 @@ jest.mock('react', () => {
   return jest.requireActual(resolvedEntryPoint);
 });
 
-jest.mock('react-reconciler/src/ReactFiberReconciler', () => {
-  return jest.requireActual(
-    __VARIANT__
-      ? 'react-reconciler/src/ReactFiberReconciler.new'
-      : 'react-reconciler/src/ReactFiberReconciler.old'
+jest.mock('react/react.shared-subset', () => {
+  const resolvedEntryPoint = resolveEntryFork(
+    require.resolve('react/src/ReactSharedSubset'),
+    global.__WWW__
   );
+  return jest.requireActual(resolvedEntryPoint);
 });
 
 // When testing the custom renderer code path through `react-reconciler`,

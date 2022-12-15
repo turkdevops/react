@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -22,7 +22,7 @@ import type {
 import type {WorkTag} from './ReactWorkTags';
 import type {TypeOfMode} from './ReactTypeOfMode';
 import type {Flags} from './ReactFiberFlags';
-import type {Lane, Lanes, LaneMap} from './ReactFiberLane.old';
+import type {Lane, Lanes, LaneMap} from './ReactFiberLane';
 import type {RootTag} from './ReactRootTags';
 import type {
   Container,
@@ -30,14 +30,12 @@ import type {
   NoTimeout,
   SuspenseInstance,
 } from './ReactFiberHostConfig';
-import type {Cache} from './ReactFiberCacheComponent.old';
-// Doing this because there's a merge conflict because of the way sync-reconciler-fork
-// is implemented
+import type {Cache} from './ReactFiberCacheComponent';
 import type {
   TracingMarkerInstance,
   Transition,
-} from './ReactFiberTracingMarkerComponent.new';
-import type {ConcurrentUpdate} from './ReactFiberConcurrentUpdates.new';
+} from './ReactFiberTracingMarkerComponent';
+import type {ConcurrentUpdate} from './ReactFiberConcurrentUpdates';
 
 // Unwind Circular: moved from ReactFiberHooks.old
 export type HookType =
@@ -46,7 +44,7 @@ export type HookType =
   | 'useContext'
   | 'useRef'
   | 'useEffect'
-  | 'useEvent'
+  | 'useEffectEvent'
   | 'useInsertionEffect'
   | 'useLayoutEffect'
   | 'useCallback'
@@ -130,6 +128,8 @@ export type Fiber = {
     | null
     | (((handle: mixed) => void) & {_stringRef: ?string, ...})
     | RefObject,
+
+  refCleanup: null | (() => void),
 
   // Input is the data coming into process this fiber. Arguments. Props.
   pendingProps: any, // This type will be more specific once we overload the tag.
@@ -290,17 +290,6 @@ type SuspenseCallbackOnlyFiberRootProperties = {
   hydrationCallbacks: null | SuspenseHydrationCallbacks,
 };
 
-// A wrapper callable object around a useEvent callback that throws if the callback is called during
-// rendering. The _impl property points to the actual implementation.
-export type EventFunctionWrapper<
-  Args,
-  Return,
-  F: (...Array<Args>) => Return,
-> = {
-  (): F,
-  _impl: F,
-};
-
 export type TransitionTracingCallbacks = {
   onTransitionStart?: (transitionName: string, startTime: number) => void,
   onTransitionProgress?: (
@@ -390,9 +379,9 @@ export type Dispatcher = {
     create: () => (() => void) | void,
     deps: Array<mixed> | void | null,
   ): void,
-  useEvent?: <Args, Return, F: (...Array<Args>) => Return>(
+  useEffectEvent?: <Args, Return, F: (...Array<Args>) => Return>(
     callback: F,
-  ) => EventFunctionWrapper<Args, Return, F>,
+  ) => F,
   useInsertionEffect(
     create: () => (() => void) | void,
     deps: Array<mixed> | void | null,
@@ -427,8 +416,6 @@ export type Dispatcher = {
   useId(): string,
   useCacheRefresh?: () => <T>(?() => T, ?T) => void,
   useMemoCache?: (size: number) => Array<any>,
-
-  unstable_isNewReconciler?: boolean,
 };
 
 export type CacheDispatcher = {

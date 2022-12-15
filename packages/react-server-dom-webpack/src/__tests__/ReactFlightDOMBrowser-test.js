@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -37,10 +37,10 @@ describe('ReactFlightDOMBrowser', () => {
     React = require('react');
     ReactDOMClient = require('react-dom/client');
     ReactDOMServer = require('react-dom/server.browser');
-    ReactServerDOMWriter = require('react-server-dom-webpack/writer.browser.server');
-    ReactServerDOMReader = require('react-server-dom-webpack');
+    ReactServerDOMWriter = require('react-server-dom-webpack/server.browser');
+    ReactServerDOMReader = require('react-server-dom-webpack/client');
     Suspense = React.Suspense;
-    use = React.experimental_use;
+    use = React.use;
   });
 
   async function readResult(stream) {
@@ -764,6 +764,42 @@ describe('ReactFlightDOMBrowser', () => {
       return use(thenable);
     }
 
+    const stream = ReactServerDOMWriter.renderToReadableStream(<Server />);
+    const response = ReactServerDOMReader.createFromReadableStream(stream);
+
+    function Client() {
+      return use(response);
+    }
+
+    const container = document.createElement('div');
+    const root = ReactDOMClient.createRoot(container);
+    await act(async () => {
+      root.render(<Client />);
+    });
+    expect(container.innerHTML).toBe('Hi');
+  });
+
+  // @gate enableUseHook
+  it('unwraps thenable that fulfills synchronously without suspending', async () => {
+    function Server() {
+      const thenable = {
+        then(resolve) {
+          // This thenable immediately resolves, synchronously, without waiting
+          // a microtask.
+          resolve('Hi');
+        },
+      };
+      try {
+        return use(thenable);
+      } catch {
+        throw new Error(
+          '`use` should not suspend because the thenable resolved synchronously.',
+        );
+      }
+    }
+
+    // Because the thenable resolves synchronously, we should be able to finish
+    // rendering synchronously, with no fallback.
     const stream = ReactServerDOMWriter.renderToReadableStream(<Server />);
     const response = ReactServerDOMReader.createFromReadableStream(stream);
 

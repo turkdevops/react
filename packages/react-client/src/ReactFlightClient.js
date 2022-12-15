@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -646,7 +646,7 @@ export function resolveErrorProd(
       ' builds to avoid leaking sensitive details. A digest property is included on this error instance which' +
       ' may provide additional details about the nature of the error.',
   );
-  error.stack = '';
+  error.stack = 'Error: ' + error.message;
   (error: any).digest = digest;
   const errorWithDigest: ErrorWithDigest = (error: any);
   const chunks = response._chunks;

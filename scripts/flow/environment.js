@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -17,6 +17,8 @@ declare var __VARIANT__: boolean;
 declare var __REACT_DEVTOOLS_GLOBAL_HOOK__: any; /*?{
   inject: ?((stuff: Object) => void)
 };*/
+
+declare var globalThis: Object;
 
 declare var queueMicrotask: (fn: Function) => void;
 declare var reportError: (error: mixed) => void;
@@ -156,4 +158,20 @@ declare module 'pg/lib/utils' {
   declare module.exports: {
     prepareValue(val: any): mixed,
   };
+}
+
+declare class AsyncLocalStorage<T> {
+  disable(): void;
+  getStore(): T | void;
+  run(store: T, callback: (...args: any[]) => void, ...args: any[]): void;
+  enterWith(store: T): void;
+}
+
+declare module 'async_hooks' {
+  declare class AsyncLocalStorage<T> {
+    disable(): void;
+    getStore(): T | void;
+    run(store: T, callback: (...args: any[]) => void, ...args: any[]): void;
+    enterWith(store: T): void;
+  }
 }

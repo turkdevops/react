@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -22,8 +22,9 @@ export {
   unstable_batchedUpdates,
   unstable_createEventHandle,
   unstable_flushControlled,
-  unstable_isNewReconciler,
   unstable_renderSubtreeIntoContainer,
   unstable_runWithPriority, // DO NOT USE: Temporarily exposed to migrate off of Scheduler.runWithPriority.
+  preinit,
+  preload,
   version,
 } from './src/client/ReactDOM';

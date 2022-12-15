@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -35,13 +35,14 @@ import {createContext} from './ReactContext';
 import {lazy} from './ReactLazy';
 import {forwardRef} from './ReactForwardRef';
 import {memo} from './ReactMemo';
+import {cache} from './ReactCache';
 import {
   getCacheSignal,
   getCacheForType,
   useCallback,
   useContext,
   useEffect,
-  useEvent,
+  useEffectEvent,
   useImperativeHandle,
   useDebugValue,
   useInsertionEffect,
@@ -100,10 +101,11 @@ export {
   forwardRef,
   lazy,
   memo,
+  cache,
   useCallback,
   useContext,
   useEffect,
-  useEvent as experimental_useEvent,
+  useEffectEvent as experimental_useEffectEvent,
   useImperativeHandle,
   useDebugValue,
   useInsertionEffect,
@@ -137,7 +139,7 @@ export {
   getCacheForType as unstable_getCacheForType,
   useCacheRefresh as unstable_useCacheRefresh,
   REACT_CACHE_TYPE as unstable_Cache,
-  use as experimental_use,
+  use,
   useMemoCache as unstable_useMemoCache,
   // enableScopeAPI
   REACT_SCOPE_TYPE as unstable_Scope,

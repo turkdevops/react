@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -185,6 +185,11 @@ export function scheduleWork(callback: () => void) {
 }
 
 export function flushBuffered(destination: Destination) {}
+
+export const supportsRequestStorage = false;
+export const requestStorage: AsyncLocalStorage<
+  Map<Function, mixed>,
+> = (null: any);
 
 export function beginWriting(destination: Destination) {}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -235,8 +235,8 @@ export function useMemoCache(size: number): Array<any> {
   return dispatcher.useMemoCache(size);
 }
 
-export function useEvent<T>(callback: T): void {
+export function useEffectEvent<T>(callback: T): void {
   const dispatcher = resolveDispatcher();
   // $FlowFixMe This is unstable, thus optional
-  return dispatcher.useEvent(callback);
+  return dispatcher.useEffectEvent(callback);
 }
